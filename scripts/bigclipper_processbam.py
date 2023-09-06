@@ -1,17 +1,16 @@
 import sys
 import re
 import pysam
-
+import argparse
 
 def main():
-    if len(sys.argv) != 2:
-        sys.stderr.write("Usage: program.py bamfile\n")
-        sys.exit(1)
+    parser = argparse.ArgumentParser(description="Process a BAM file to find soft-clipped reads with supplementary alignments, and output an intermediate file for input to bigclipper_getclusters.py\n")
+    parser.add_argument('bamfile', help='BAM file to read')
 
-    bamfile = pysam.AlignmentFile(sys.argv[1], 'rb')
-    # min_clipping = 500
+    args = parser.parse_args()
 
-    # print("ref\tpos\tpos+1\tmapq\talignment-length\tsoft-clipping-length\treadname")
+    bamfile = pysam.AlignmentFile(args.bamfile, 'rb')
+
     for read in bamfile:
         if read.is_secondary:  # should leave only primary and supplementary alignments
             continue

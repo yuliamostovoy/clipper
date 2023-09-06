@@ -1,4 +1,4 @@
-name: clipper
+name: bigclipper
 channels:
   - conda-forge
   - bioconda

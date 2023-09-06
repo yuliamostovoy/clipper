@@ -5,16 +5,16 @@ import argparse
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Filter clustered file of split reads derived from split_reads.py\n")
-    parser.add_argument('clusterfile', help='Clustered file of split reads')
-    parser.add_argument('-d', '--min_dist', dest='min_dist', help="Minimum distance between where read splits align on the reference (bp) (default=1)", type=int, default=1)
-    parser.add_argument('-c', '--min_cluster_count', dest='min_cluster_count', help="Minimum number of reads in a cluster (default=5)", type=int, default=5)
-    parser.add_argument('-u', '--max_unique_breakends', dest='max_unique_breakends', help="Maximum number of unique breakends for a cluster (default=10)", type=int, default=10)
-    parser.add_argument('-s', '--cluster_dist', dest='cluster_dist', help="Max distance between supplementary breakends to cluster them together (default=50)", type=int, default=50)
+    parser = argparse.ArgumentParser(description="Filter intermediate file derived from bigclipper_processbam.py\n")
+    parser.add_argument('intermediate_file', help='Intermediate file produced by bigclipper_processbam.py')
+    parser.add_argument('-d', '--min_dist', dest='min_dist', help="Minimum reference distance between split alignment positions of a single read (increase to find longer-range split-reads) (bp) [default=1]", type=int, default=1)
+    parser.add_argument('-c', '--min_cluster_count', dest='min_cluster_count', help="Minimum number of reads in a cluster [default=5]", type=int, default=5)
+    parser.add_argument('-s', '--cluster_dist', dest='cluster_dist', help="Maximum distance between supplementary alignment positions to cluster them together as a single \"supplementary alignment region\" [default=50]", type=int, default=50)
+    parser.add_argument('-u', '--max_unique_breakends', dest='max_unique_breakends', help="Maximum number of supplementary alignment regions within a cluster (reduces false positives by filtering high-copy-number repeats) [default=10]", type=int, default=10)
 
     args = parser.parse_args()
 
-    infile = open(args.clusterfile,'r')
+    infile = open(args.intermediatefile,'r')
 
     current_cluster = []
     current_cluster_ID = None

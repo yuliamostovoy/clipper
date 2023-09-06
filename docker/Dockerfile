@@ -4,13 +4,13 @@ MAINTAINER Yulia Mostovoy
 
 # copy other resources
 COPY ./environment.yml /
-RUN wget https://github.com/yuliamostovoy/clipper/raw/master/split_reads.py && \
-    wget https://github.com/yuliamostovoy/clipper/raw/master/split_reads_process_clusters.py
+RUN wget https://raw.githubusercontent.com/yuliamostovoy/bigclipper/main/scripts/bigclipper_getclusters.py && \
+    wget https://raw.githubusercontent.com/yuliamostovoy/bigclipper/main/scripts/bigclipper_processbam.py
 
 # install conda packages
 RUN conda env create -f /environment.yml && conda clean -a
-RUN echo "conda activate clipper" >> ~/.bashrc
-ENV PATH=/opt/conda/envs/clipper/bin/:/root/google-cloud-sdk/bin/:${PATH}
+RUN echo "conda activate bigclipper" >> ~/.bashrc
+ENV PATH=/opt/conda/envs/bigclipper/bin/:/root/google-cloud-sdk/bin/:${PATH}
 
 # install gsutil
 RUN apt update

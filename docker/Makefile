@@ -1,6 +1,6 @@
 VERSION = 1.1
-TAG1 = quay.io/ymostovoy/clipper:$(VERSION)
-TAG2 = quay.io/ymostovoy/clipper:latest
+TAG1 = quay.io/ymostovoy/bigclipper:$(VERSION)
+TAG2 = quay.io/ymostovoy/bigclipper:latest
 
 all: build push
 
