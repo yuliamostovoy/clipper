@@ -1,4 +1,5 @@
 import sys
+import os
 import re
 import pysam
 import argparse
@@ -6,10 +7,15 @@ import argparse
 def main():
     parser = argparse.ArgumentParser(description="Process a BAM file to find soft-clipped reads with supplementary alignments, and output an intermediate file for input to bigclipper_getclusters.py\n")
     parser.add_argument('bamfile', help='BAM file to read')
+    parser.add_argument('-o', '--output_prefix', dest="output_prefix", help="Prefix for output file")
+    parser.add_argument('-d', '--output_dir', dest='output_dir', help="Directory for output file")
 
     args = parser.parse_args()
 
+    outdir = args.output_dir.rstrip('/')
+
     bamfile = pysam.AlignmentFile(args.bamfile, 'rb')
+    outfile = open("%s/%s_intermediate.bed" % (outdir, args.output_prefix), 'w')
 
     for read in bamfile:
         if read.is_secondary:  # should leave only primary and supplementary alignments
@@ -33,14 +39,18 @@ def main():
                         SA = "%s:%d%s" % (aln_SA['r'], aln_SA['re'], '-')
                     else:
                         SA = "%s:%d%s" % (aln_SA['r'], aln_SA['rs'], '+')
-                    print("%s\t%d\t%d\t.\t.\t%s\t%d\t%d\t%s\t%s" % (aln['r'], aln['rs'], aln['rs'] + 1, '-', aln['mq'], aln['aligned_length'], read.query_name, SA))
+                    outfile.write("%s\t%d\t%d\t.\t.\t%s\t%d\t%d\t%s\t%s\n" % (aln['r'], aln['rs'], aln['rs'] + 1, '-', aln['mq'], aln['aligned_length'], read.query_name, SA))
                 if i < len(alns_sorted)-1:  # if a subsequent alignment exists
                     aln_SA = alns_sorted[i + 1]
                     if aln_SA['strand'] == '+':
                         SA = "%s:%d%s" % (aln_SA['r'], aln_SA['rs'], aln_SA['strand'])
                     else:
                         SA = "%s:%d%s" % (aln_SA['r'], aln_SA['re'], aln_SA['strand'])
-                    print("%s\t%d\t%d\t.\t.\t%s\t%d\t%d\t%s\t%s" % (aln['r'], aln['re'], aln['re'] + 1, '+', aln['mq'], aln['aligned_length'], read.query_name, SA))
+                    outfile.write("%s\t%d\t%d\t.\t.\t%s\t%d\t%d\t%s\t%s\n" % (aln['r'], aln['re'], aln['re'] + 1, '+', aln['mq'], aln['aligned_length'], read.query_name, SA))
+
+    outfile.close()
+
+    os.system("sort -k1,1 -k2,2n %s/%s_intermediate.bed -o %s/%s_intermediate.bed" % (outdir, args.output_prefix, outdir, args.output_prefix))
 
 
 def aln_reverse(alignments):

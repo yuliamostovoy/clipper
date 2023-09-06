@@ -1,4 +1,5 @@
 import sys
+import os
 import numpy
 import scipy.cluster.hierarchy as hcluster
 import argparse
@@ -14,30 +15,34 @@ def main():
 
     args = parser.parse_args()
 
-    infile = open(args.intermediatefile,'r')
+    # preprocess intermediate file
+    prefix = args.intermediate_file.rstrip('bed').rstrip('.')
+    os.system("bedtools cluster -d %d -s -i %s | cut -f1,2,3,6,7,8,9,10,11 > %s_clustered" % (args.cluster_dist, args.intermediate_file, prefix))
+
+    infile = open("%s_clustered" % prefix,'r')
+    outfile = open("%s_d%d_c%d_s%d_u%d.vcf" % (prefix, args.min_dist, args.min_cluster_count, args.cluster_dist, args.max_unique_breakends), 'w')
 
     current_cluster = []
     current_cluster_ID = None
 
     # print header
-    print("##fileformat=VCFv4.1")
-    print("#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO")
+    outfile.write("##fileformat=VCFv4.1\n")
+    outfile.write("#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n")
 
     for line in infile:
         line = line.strip().split('\t')
         if line[-1] != current_cluster_ID:
             if len(current_cluster) >= args.min_cluster_count:
-                process_cluster(current_cluster, args.min_dist, args.max_unique_breakends, args.cluster_dist)
+                process_cluster(current_cluster, args.min_dist, args.max_unique_breakends, args.cluster_dist, outfile)
             current_cluster = [line]
             current_cluster_ID = line[-1]
         else:
             current_cluster.append(line)
 
     if len(current_cluster) >= args.min_cluster_count:  # process last one
-        process_cluster(current_cluster, args.min_dist, args.max_unique_breakends, args.cluster_dist)
+        process_cluster(current_cluster, args.min_dist, args.max_unique_breakends, args.cluster_dist, outfile)
 
-
-def process_cluster(cluster, min_dist, max_unique_breakends, thresh):
+def process_cluster(cluster, min_dist, max_unique_breakends, thresh, outfile):
     ref = cluster[0][0]
     pos = int(cluster[0][1])
     ID = int(cluster[0][8])
@@ -91,15 +96,15 @@ def process_cluster(cluster, min_dist, max_unique_breakends, thresh):
         return
     cluster_info = sorted(cluster_info, key=lambda x: x['count'], reverse=True)  # sort by frequency
 
-    print_cluster(ref, pos, ID, max_mapq, cluster_info)
+    print_cluster(ref, pos, ID, max_mapq, cluster_info, outfile)
 
 
-def print_cluster(ref, pos, ID, qual, cluster_info):
+def print_cluster(ref, pos, ID, qual, cluster_info, outfile):
     # VCF format is 1-based!
-    print("%s\t%d\t%d\t.\t.\t%d\tPASS\tALNS=" % (ref, pos+1, ID, qual), end='')
+    outfile.write("%s\t%d\t%d\t.\t.\t%d\tPASS\tALNS=" % (ref, pos+1, ID, qual))
     for hit in cluster_info:
-        print("%s:%d-%d(%d,%s);" % (hit['ref'], hit['pos1']+1, hit['pos2']+1, hit['count'], hit['ori']), end='')
-    print()
+        outfile.write("%s:%d-%d(%d,%s);" % (hit['ref'], hit['pos1']+1, hit['pos2']+1, hit['count'], hit['ori']))
+    outfile.write("\n")
 
 
 if __name__ == "__main__": main()

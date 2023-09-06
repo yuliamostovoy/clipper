@@ -8,7 +8,6 @@ Bedtools
 Python >= 3
 
 **Python libraries:**
-  * re
   * pysam
   * numpy
   * scipy
@@ -20,7 +19,7 @@ To create a conda environment for running BigClipper locally:
 ```
 git clone https://github.com/yuliamostovoy/bigclipper.git
 cd bigclipper
-conda env create -f docker/environment.yml
+conda env create -f environment.yml
 conda activate bigclipper
 ```
 
@@ -31,8 +30,9 @@ BigClipper runs in two phases. The first -- which is slower and only needs to be
 
 Phase 1: process the BAM file
 ```
-python bigclipper/scripts/bigclipper_processbam.py [BAM] > bigclipper_intermediate_file
+python bigclipper/scripts/bigclipper_processbam.py [BAM] [output_prefix]
 ```
+Phase 1 output: `[output_prefix]_intermediate.bed`
 
 Phase 2: process the intermediate file and output clusters
 ```

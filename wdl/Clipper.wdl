@@ -23,11 +23,11 @@ workflow RunClipper {
         max_cluster_dist:       "Max distance between supplementary breakends to cluster them together (default=50)"
     }
 
-    call ClipperCluster { input: aligned_bam = aligned_bam, prefix=prefix }
+    call ProcessBam { input: aligned_bam = aligned_bam, prefix=prefix }
 
-    call ClipperProcess {
+    call GetClusters {
       input:
-        clusterfile = ClipperCluster.clusterfile,
+        intermediate_file = ProcessBam.intermediate_file,
         prefix = prefix,
         min_dist = select_first([min_dist, 1]),
         min_cluster_count = select_first([min_cluster_count, 5]),
@@ -36,11 +36,11 @@ workflow RunClipper {
     }
 
     output {
-        File clipped_vcf = ClipperProcess.clustervcf
+        File clipped_vcf = GetClusters.clustervcf
     }
 }
 
-task ClipperCluster {
+task ProcessBam {
     input {
         File aligned_bam
         String prefix
@@ -52,11 +52,11 @@ task ClipperCluster {
     command <<<
         set -euxo pipefail
 
-        python /split_reads.py ~{aligned_bam} | sort -k1,1 -k2,2n > ~{prefix}_clipped_reads.bed
+        python /bigclipper_processbam.py ~{aligned_bam} ~{prefix}
     >>>
 
     output {
-        File clusterfile = "~{prefix}_clipped_reads.bed"
+        File intermediate_file = "~{prefix}.bed"
     }
 
     #########################
@@ -82,9 +82,9 @@ task ClipperCluster {
     }
 }
 
-task ClipperProcess {
+task GetClusters {
     input {
-        File clusterfile
+        File intermediate_file
         String prefix
         Int min_dist
         Int min_cluster_count
@@ -96,11 +96,10 @@ task ClipperProcess {
     Int disk_size = ceil(size(clusterfile, "GB"))+50
 
     command <<<
-        bedtools cluster -d ~{max_cluster_dist} -s -i ~{clusterfile} | cut -f1,2,3,6,7,8,9,10,11 > ~{prefix}_clipped_reads_clustered.bed
-        python /split_reads_process_clusters.py ~{prefix}_clipped_reads_clustered.bed -d ~{min_dist} -c ~{min_cluster_count} -u ~{max_unique_breakends} -s ~{max_cluster_dist} > ~{prefix}_clipped_reads_d~{min_dist}_c~{min_cluster_count}_u~{max_unique_breakends}_s~{max_cluster_dist}.vcf
+        python /bigclipper_getclusters.py ~{intermediate_file} -d ~{min_dist} -c ~{min_cluster_count} -s ~{max_cluster_dist} -u ~{max_unique_breakends}
     >>>
 
-    output { File clustervcf = "~{prefix}_clipped_reads_d~{min_dist}_c~{min_cluster_count}_u~{max_unique_breakends}_s~{max_cluster_dist}.vcf" }
+    output { File clustervcf = "~{prefix}_clipped_reads_d~{min_dist}_c~{min_cluster_count}_s~{max_cluster_dist}_u~{max_unique_breakends}.vcf" }
 
     #########################
     RuntimeAttr default_attr = object {
