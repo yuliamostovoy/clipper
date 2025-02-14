@@ -36,7 +36,7 @@ Phase 1 output: `[output_prefix]_intermediate.bed`
 
 Phase 2: process the intermediate file and output clusters
 ```
-python bigclipper/scripts/bigclipper_processbam.py [-h] [-d MIN_DIST] [-c MIN_CLUSTER_COUNT] [-u MAX_UNIQUE_BREAKENDS] [-s CLUSTER_DIST] intermediate_file
+python bigclipper/scripts/bigclipper_getclusters.py [-h] [-d MIN_DIST] [-c MIN_CLUSTER_COUNT] [-u MAX_UNIQUE_BREAKENDS] [-s CLUSTER_DIST] intermediate_file
 
 positional arguments:
   intermediate_file           Intermediate file produced by bigclipper_processbam.py
